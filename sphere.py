@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -18,7 +19,7 @@ class Sphere:
                  '1_-1':'blue',
                  '1_1':'yellow',
                  '2_-1':'orange',
-                 '2_1':'white',
+                 '2_1':'purple',
                              }
             plane_ind = np.argmax(np.abs(coords))
             plane_depth = 1 if 0<coords[plane_ind] else -1
@@ -205,7 +206,11 @@ class Sphere:
         for i,pt in enumerate(self.points):
             if pt[planes_dict[plane]]==coord:
                 self.rotate_point_around_axis(point_idx=i,plane_normal=planes_dict[plane],angle_degrees=angle_degrees)
-
+            #rotate the face on the side of the rotation
+            elif pt[planes_dict[plane]]==1.0 and coord>0.0:
+                self.rotate_point_around_axis(point_idx=i,plane_normal=planes_dict[plane],angle_degrees=angle_degrees)
+            elif pt[planes_dict[plane]]==-1.0 and coord<0.0:
+                self.rotate_point_around_axis(point_idx=i,plane_normal=planes_dict[plane],angle_degrees=angle_degrees)
 
     def round_points(self):
         #round to +/-0.25 or +/-1.0, or 0.0
@@ -218,3 +223,25 @@ class Sphere:
         for i,pt in enumerate(self.points):
             self.points[i] = round_point(pt)
 
+    def scramble(self,n=100):
+
+        for i in range(n):
+            self.move_column(coord=-0.25 if np.random.rand(2)==0 else 1,
+                             axis=np.random.rand(3), 
+                             angle_degrees=np.random.rand()*360)
+            self.round_points()
+    def get_state(self):
+        def group_points_by_face(points):
+            face_dict = {
+                '0_-1':[],
+                '0_1':[],
+                '1_-1':[],
+                '1_1':[],
+                '2_-1':[],
+                '2_1':[]
+            }
+            for pt in points:
+                face_depth = str(np.argmax(abs(pt)))+'_'+str(1 if pt[np.argmax(abs(pt))]>0 else -1)
+                face_dict[face_depth].append(pt)
+            return face_dict
+        for key in 
