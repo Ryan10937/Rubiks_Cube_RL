@@ -226,10 +226,8 @@ class Sphere:
     def scramble(self,n=100):
 
         for i in range(n):
-            self.move_column(coord=-0.25 if np.random.rand(2)==0 else 1,
-                             axis=np.random.rand(3), 
-                             angle_degrees=np.random.rand()*360)
-            self.round_points()
+            self.move(random.randint(0,11))
+
     def get_state(self):
         def group_points_by_face(points):
             face_dict = {
@@ -240,8 +238,48 @@ class Sphere:
                 '2_-1':[],
                 '2_1':[]
             }
-            for pt in points:
-                face_depth = str(np.argmax(abs(pt)))+'_'+str(1 if pt[np.argmax(abs(pt))]>0 else -1)
-                face_dict[face_depth].append(pt)
+            for pt,color in zip(points,self.color_list):
+                face = str(np.argmax([abs(p) for p in pt]))+'_'+str(1 if pt[np.argmax([abs(p) for p in pt])]>0 else -1)
+                face_dict[face].append(color)
             return face_dict
-        for key in 
+        face_point_groups = group_points_by_face(self.points)
+        state = [lst for key,lst in face_point_groups.items()]
+        return np.array(state)
+    
+    def get_reward(self,state):
+        reward = 0
+        for lst in state:
+            face_color = lst[4]
+            for pt in lst:
+                if pt==face_color:
+                    reward+=1
+        if reward==3*3*6:
+            reward = 1000
+        return reward
+    def move(self,action):
+        if action==0:
+            self.move_column(coord=-0.25,plane='x',angle_degrees=90)
+        elif action==1:
+            self.move_column(coord=0.25,plane='x',angle_degrees=90)
+        elif action==2:
+            self.move_column(coord=-0.25,plane='y',angle_degrees=90)
+        elif action==3:
+            self.move_column(coord=0.25,plane='y',angle_degrees=90)
+        elif action==4:
+            self.move_column(coord=-0.25,plane='z',angle_degrees=90)
+        elif action==5:
+            self.move_column(coord=0.25,plane='z',angle_degrees=90)
+        elif action==6:
+            self.move_column(coord=-0.25,plane='x',angle_degrees=270)
+        elif action==7:
+            self.move_column(coord=0.25,plane='x',angle_degrees=270)
+        elif action==8:
+            self.move_column(coord=-0.25,plane='y',angle_degrees=270)
+        elif action==9:
+            self.move_column(coord=0.25,plane='y',angle_degrees=270)
+        elif action==10:
+            self.move_column(coord=-0.25,plane='z',angle_degrees=270)
+        elif action==11:
+            self.move_column(coord=0.25,plane='z',angle_degrees=270)
+        self.round_points()
+        # return self.get_state()
