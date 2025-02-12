@@ -10,7 +10,7 @@ if __name__ == '__main__':
     print('Starting the CUBE')
     cube = RubiksCubeSolver()
     cube.sphere.init_plot()
-    train_until_solved(cube,100)
+    train_until_solved(cube,6)
     # for i in range(12):
     #     cube.sphere.move(i)
     #     cube.sphere.render()
