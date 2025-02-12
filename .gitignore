@@ -4,3 +4,4 @@ __pycache__/
 .vscode/
 #ignore env folder
 rubiks_env/
+history/

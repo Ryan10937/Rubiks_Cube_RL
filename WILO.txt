@@ -3,3 +3,8 @@ trying to fix reward, points on each face are not in the same order. Theyre in t
 they ARE grouped by face
 i can find center point in the we reward function
   jk no i cant, it might be better to do it in the init/placing
+
+
+
+WILO 2/12/2025
+load history
