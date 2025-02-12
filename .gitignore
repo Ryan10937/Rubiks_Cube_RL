@@ -1,0 +1,6 @@
+#ignore __pycache__ folder
+__pycache__/
+#ignore .vscode folder
+.vscode/
+#ignore env folder
+rubiks_env/

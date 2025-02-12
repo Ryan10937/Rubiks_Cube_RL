@@ -9,15 +9,18 @@ def train_until_solved(solver, max_timesteps):
     timestep_count=0
     solver.sphere.scramble()
     while True:
+        print(solver.sphere.get_state())
+        solver.sphere.render()
         timestep_count+=1
         solver.train_with_history()
-        solver.infer(solver.sphere.get_state())
+        action = solver.infer(solver.sphere.get_state())
+        solver.sphere.move(action)
         current_state = solver.sphere.get_state()
-        if is_homogenous(current_state):
-            break
         if timestep_count > max_timesteps:
             break
-    solver.sphere.render()
+        if is_homogenous(current_state):
+            break
+        
     
 def run_episode(solver):
-    pass
+    pass 

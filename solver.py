@@ -1,3 +1,4 @@
+from colorama import init
 import tensorflow as tf
 from tensorflow.keras import layers, models
 import numpy as np
@@ -28,7 +29,7 @@ class RubiksCubeSolver:
         }
 
     def save_history(self):
-        filepath = filepath=f'{self.history_path}/history_{len(os.listdir(self.history_path))}.npy'
+        filepath = f'{self.history_path}/history_{len(os.listdir(self.history_path))}.npy'
         np.save(filepath, self.history)
     def load_history(self):
         for file in os.listdir(self.history_folder):
@@ -46,6 +47,8 @@ class RubiksCubeSolver:
     def infer(self, state):
         if random.random() < self.epsilon:
             return [random.randint(0, self.action_range)]
+        # state = np.array([[self.color_to_int[row] for row in s] for s in state])
+        state = self._reformat_state(state=state)
         state = np.array(state).reshape((1, 6, 9))
         logits = self.model.predict(state)
 
@@ -54,19 +57,23 @@ class RubiksCubeSolver:
             self.memory_queue.pop(0)
         rewards=[]
         for action in range(self.action_range):
-            sphere_copy = copy.deepcopy(self.sphere)
+            # sphere_copy = copy.deepcopy(self.sphere)
+            sphere_copy = Sphere()
+            sphere_copy.points = copy.deepcopy(self.sphere.points)
             sphere_copy.move(action)
             rewards.append(self.get_reward_from_state(sphere_copy.get_state()))
-        self.memory_queue.append([[self.color_to_int[s] for s in state],rewards])
-        self.history([[self.color_to_int[s] for s in state],rewards])#rewards should be a list of rewards for each action
-        return [np.argmax(lgts) for lgts in logits]
+        self.memory_queue.append([state,rewards])
+        self.history.append([state,rewards])#rewards should be a list of rewards for each action
+        # return [np.argmax(lgts) for lgts in logits]
+        return np.argmax(logits)
     
     # def train(self, states, actions, rewards, epochs=10):
     def train(self, states, rewards, epochs=10):
+        states = [self._reformat_state(state=state) for state in states]
         states = np.array(states).reshape((-1, 6, 9))
         actions = np.array(actions)
         rewards = np.array(rewards)
-        self.model.fit([self.color_to_int[s] for s in state], rewards, epochs=epochs)
+        self.model.fit(states, rewards, epochs=epochs)
         self.save_model(self.model_save_path)
     def train_with_history(self):
         if len(os.listdir(self.history_folder))<5:
@@ -81,7 +88,6 @@ class RubiksCubeSolver:
         rewards = [x[1] for x in training_data]
         self.train(states=states,rewards=rewards,epochs=self.epochs)
     def get_reward_from_state(self, state):
-        # Placeholder for reward calculation logic
         return self.sphere.get_reward(state)
 
     def save_model(self, filepath):
@@ -89,6 +95,9 @@ class RubiksCubeSolver:
 
     def load_model(self, filepath):
         self.model = models.load_model(filepath)
+
+    def _reformat_state(self,state):
+        return  np.array([[self.color_to_int[row] for row in s] for s in state])
 
 
 

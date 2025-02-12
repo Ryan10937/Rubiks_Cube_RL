@@ -1,6 +1,10 @@
+import enum
+import re
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
 from mpl_toolkits.mplot3d import Axes3D
 
 class Sphere:
@@ -11,6 +15,18 @@ class Sphere:
         self.place_points_on_cube_faces(grid_range=0.3)
         self.round_points()
         self.color_list = self.create_color_list()
+
+    def init_plot(self):
+        plt.ion()
+        self.fig = plt.figure(figsize=(8, 8))
+        self.ax = self.fig.add_subplot(111, projection='3d')
+        
+        # Equal aspect ratio
+        self.ax.set_box_aspect([1,1,1])
+        self.ax.set_xlabel('X')
+        self.ax.set_ylabel('Y')
+        self.ax.set_zlabel('Z')
+        
     def create_color_list(self):
         def color_conditions(coords):
             face_depth_dict = {
@@ -26,38 +42,27 @@ class Sphere:
             return str(face_depth_dict[str(plane_ind)+'_'+str(plane_depth)])
         
         return [color_conditions(coords) for coords in self.points]
-
     def render(self):
-        fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111, projection='3d')
-        
+        self.ax.cla()
         # Draw the sphere
         u = np.linspace(0, 2 * np.pi, 100)
         v = np.linspace(0, np.pi, 100)
         x = self.radius * np.outer(np.cos(u), np.sin(v)) + self.center[0]
         y = self.radius * np.outer(np.sin(u), np.sin(v)) + self.center[1]
         z = self.radius * np.outer(np.ones(np.size(u)), np.cos(v)) + self.center[2]
-        ax.plot_surface(x, y, z, color='b', alpha=0.1)
-        
-        
-
+        self.ax.plot_surface(x, y, z, color='b', alpha=0.1)
         # Draw the points
         if self.points:
             points_array = np.array(self.points)
-            ax.scatter(
+            self.ax.scatter(
                 points_array[:, 0], 
                 points_array[:, 1], 
                 points_array[:, 2], 
                 c=self.color_list, 
                 s=20
             )
-
-        # Equal aspect ratio
-        ax.set_box_aspect([1,1,1])
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        plt.show()
+        plt.show(block=False)
+        plt.pause(0.1)
 
     def place_points_on_cube_faces(self, grid_range=0.5):
         """Place 9 points on each of the 6 cube-like faces of the sphere.
@@ -95,51 +100,6 @@ class Sphere:
                     z_global = self.radius * z_norm + self.center[2]
                     
                     self.points.append((x_global, y_global, z_global))
-
-    def rotate_point_around_axis_old(self,point_idx, axis, angle_degrees):
-        """
-        Rotate a point on a sphere around a specified axis by a given angle.
-
-        Parameters:
-            point (list or np.array): The coordinates of the point [x, y, z].
-            axis (list or np.array): The axis of rotation [ax, ay, az].
-            angle_degrees (float): The angle of rotation in degrees.
-
-        Returns:
-            np.array: The new coordinates of the point after rotation.
-        """
-        point=self.points[point_idx]
-
-        # Convert angle to radians
-        angle_radians = np.radians(angle_degrees)
-
-        # Normalize the axis vector
-        # axis = np.array([0 if i==axis else 1 for i in range(3)])
-        axis = np.array([1,1,0])
-        axis = np.array([1,0,1])
-        axis = np.array([0,1,1])
-        axis = axis / np.linalg.norm(axis)
-
-        # Extract components of the axis
-        ax, ay, az = axis
-
-        # Compute rotation matrix
-        cos_theta = np.cos(angle_radians)
-        sin_theta = np.sin(angle_radians)
-
-        rotation_matrix = np.array([
-            [cos_theta + ax**2 * (1 - cos_theta), ax * ay * (1 - cos_theta) - az * sin_theta, ax * az * (1 - cos_theta) + ay * sin_theta],
-            [ay * ax * (1 - cos_theta) + az * sin_theta, cos_theta + ay**2 * (1 - cos_theta), ay * az * (1 - cos_theta) - ax * sin_theta],
-            [az * ax * (1 - cos_theta) - ay * sin_theta, az * ay * (1 - cos_theta) + ax * sin_theta, cos_theta + az**2 * (1 - cos_theta)]
-        ])
-
-        # Apply the rotation matrix to the point
-        rotated_point = np.dot(rotation_matrix, point)
-
-        # Normalize the point to ensure it stays on the sphere
-        rotated_point = rotated_point / np.linalg.norm(rotated_point)
-
-        self.points[point_idx] = rotated_point
 
     def rotate_point_around_axis(self,point_idx, plane_normal, angle_degrees):
         """
@@ -227,32 +187,46 @@ class Sphere:
 
         for i in range(n):
             self.move(random.randint(0,11))
+    
+    def group_points_by_face(self,points):
+        self.face_colors = {
+            '0_-1':'none',
+            '0_1':'none',
+            '1_-1':'none',
+            '1_1':'none',
+            '2_-1':'none',
+            '2_1':'none'
+        }
+        face_dict = {
+            '0_-1':[],
+            '0_1':[],
+            '1_-1':[],
+            '1_1':[],
+            '2_-1':[],
+            '2_1':[]
+        }
 
+        for pt,color in zip(points,self.color_list):
+            face = str(np.argmax([abs(p) for p in pt]))+'_'+str(1 if pt[np.argmax([abs(p) for p in pt])]>0 else -1)
+            face_dict[face].append(color)
+            if 0.25 not in pt and -0.25 not in pt:
+                self.face_colors[face] = color
+        return face_dict
     def get_state(self):
-        def group_points_by_face(points):
-            face_dict = {
-                '0_-1':[],
-                '0_1':[],
-                '1_-1':[],
-                '1_1':[],
-                '2_-1':[],
-                '2_1':[]
-            }
-            for pt,color in zip(points,self.color_list):
-                face = str(np.argmax([abs(p) for p in pt]))+'_'+str(1 if pt[np.argmax([abs(p) for p in pt])]>0 else -1)
-                face_dict[face].append(color)
-            return face_dict
-        face_point_groups = group_points_by_face(self.points)
+        
+        face_point_groups = self.group_points_by_face(self.points)
         state = [lst for key,lst in face_point_groups.items()]
+        self.color_to_index = [self.face_colors[key] for key,lst in face_point_groups.items()]
         return np.array(state)
     
     def get_reward(self,state):
         reward = 0
-        for lst in state:
-            face_color = lst[4]
+        for i,lst in enumerate(state):
+            face_reward=0
             for pt in lst:
-                if pt==face_color:
+                if pt==self.color_to_index[i]:
                     reward+=1
+                    face_reward+=1
         if reward==3*3*6:
             reward = 1000
         return reward
@@ -282,4 +256,3 @@ class Sphere:
         elif action==11:
             self.move_column(coord=0.25,plane='z',angle_degrees=270)
         self.round_points()
-        # return self.get_state()
