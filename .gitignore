@@ -5,3 +5,4 @@ __pycache__/
 #ignore env folder
 rubiks_env/
 history/
+models/

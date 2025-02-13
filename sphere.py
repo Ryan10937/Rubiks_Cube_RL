@@ -162,7 +162,6 @@ class Sphere:
     def move_column(self,coord,plane,angle_degrees):
         planes_dict={'x':0,'y':1,'z':2}
         assert plane in planes_dict.keys()
-        pois = []
         for i,pt in enumerate(self.points):
             if pt[planes_dict[plane]]==coord:
                 self.rotate_point_around_axis(point_idx=i,plane_normal=planes_dict[plane],angle_degrees=angle_degrees)
@@ -221,14 +220,20 @@ class Sphere:
     
     def get_reward(self,state):
         reward = 0
+        faces_completed = 0
         for i,lst in enumerate(state):
             face_reward=0
+            face_completed = False
             for pt in lst:
                 if pt==self.color_to_index[i]:
                     reward+=1
                     face_reward+=1
-        if reward==3*3*6:
-            reward = 1000
+            if face_reward==9:
+                face_completed = True
+                reward+=10
+                faces_completed+=1
+        if faces_completed==6:
+            reward += 1000
         return reward
     def move(self,action):
         if action==0:

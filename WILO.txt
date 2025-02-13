@@ -8,3 +8,5 @@ i can find center point in the we reward function
 
 WILO 2/12/2025
 maybe it works now idk
+next is to verify training works as expected
+then change model to RNN

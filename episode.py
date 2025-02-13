@@ -1,4 +1,5 @@
-
+from solver import RubiksCubeSolver
+from sphere import Sphere
 def is_homogenous(state):
     for row in state:
         if len(set(row)) != 1:
@@ -18,7 +19,7 @@ def train_until_solved(solver, max_timesteps):
 
         #get action from model
         action = solver.infer(solver.sphere.get_state())
-        print('action:',action)
+
         #perform that action on the env
         solver.sphere.move(action)
 
@@ -34,5 +35,9 @@ def train_until_solved(solver, max_timesteps):
     solver.save_history()
         
     
-def run_episode(solver):
-    pass 
+def run_episode(max_timesteps,num_episodes):
+    for episode in range(num_episodes):
+        print('Episode: ',episode)
+        cube = RubiksCubeSolver()
+        cube.sphere.init_plot()
+        train_until_solved(cube,max_timesteps) 
