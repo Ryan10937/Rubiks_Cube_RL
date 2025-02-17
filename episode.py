@@ -9,6 +9,7 @@ def is_homogenous(state):
 def train_until_solved(solver, max_timesteps):
     timestep_count=0
     solver.sphere.scramble()
+    solver.train_with_history()
     while True:
         #render rubiks cube
         solver.sphere.render()
@@ -30,7 +31,6 @@ def train_until_solved(solver, max_timesteps):
         if is_homogenous(current_state):
             break
     #train model with history
-    solver.train_with_history()
     #save history
     solver.save_history()
         
@@ -40,4 +40,4 @@ def run_episode(max_timesteps,num_episodes):
         print('Episode: ',episode)
         cube = RubiksCubeSolver()
         cube.sphere.init_plot()
-        train_until_solved(cube,max_timesteps) 
+        train_until_solved(cube,max_timesteps)
