@@ -1,5 +1,5 @@
 from solver import RubiksCubeSolver
-from sphere import Sphere
+from sphere import RubiksCube
 def is_homogenous(state):
     for row in state:
         if len(set(row)) != 1:

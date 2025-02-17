@@ -1,5 +1,4 @@
-import enum
-import re
+import copy
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -7,7 +6,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 from mpl_toolkits.mplot3d import Axes3D
 
-class Sphere:
+class RubiksCube:
     def __init__(self, radius=1.0, center=(0, 0, 0)):
         self.radius = radius
         self.center = np.array(center)
@@ -261,3 +260,19 @@ class Sphere:
         elif action==11:
             self.move_column(coord=0.25,plane='z',angle_degrees=270)
         self.round_points()
+    def step(self,action):
+        self.move(action)
+        state = self.get_state()
+        reward = self.get_reward(state)
+        done = False
+        if reward>1000:
+            done = True
+        return state,reward,done
+    def get_next_state_rewards(self):
+        rewards=[]
+        for next_action in range(12):
+            sphere_copy = RubiksCube()
+            sphere_copy.points = copy.deepcopy(self.points)
+            sphere_copy.move(next_action)
+            rewards.append(self.get_reward(sphere_copy.get_state()))
+        return rewards

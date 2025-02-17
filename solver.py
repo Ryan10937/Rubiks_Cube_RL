@@ -5,13 +5,13 @@ from tensorflow.keras import layers, models
 import numpy as np
 import random
 import os
-from sphere import Sphere
+from sphere import RubiksCube
 import copy
 import csv
 
 class RubiksCubeSolver:
     def __init__(self):
-        self.sphere = Sphere()
+        self.sphere = RubiksCube()
         self.epsilon = 0.2 # Exploration rate
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
@@ -79,12 +79,7 @@ class RubiksCubeSolver:
         #add to memory queue
         while len(self.memory_queue) > self.model_sequence_length:
             self.memory_queue.pop(0)
-        rewards=[]
-        for next_action in range(self.action_range):
-            sphere_copy = Sphere()
-            sphere_copy.points = copy.deepcopy(self.sphere.points)
-            sphere_copy.move(next_action)
-            rewards.append(self.get_reward_from_state(sphere_copy.get_state()))
+        rewards = self.sphere.get_next_state_rewards()
         self.memory_queue.append([state[0],rewards])
         self.history.append([state,rewards])#rewards should be a list of rewards for each action
         return action

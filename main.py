@@ -8,6 +8,6 @@ import time
 
 if __name__ == '__main__':
     print('Starting the CUBE')
-    run_episode(max_timesteps=1000,num_episodes=50)
+    run_episode(max_timesteps=10,num_episodes=2)
 
 
