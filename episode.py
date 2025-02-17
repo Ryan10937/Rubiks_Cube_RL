@@ -14,8 +14,6 @@ def train_until_solved(solver, max_timesteps):
         solver.sphere.render()
         timestep_count+=1
 
-        #train model with history
-        solver.train_with_history()
 
         #get action from model
         action = solver.infer(solver.sphere.get_state())
@@ -31,6 +29,8 @@ def train_until_solved(solver, max_timesteps):
             break
         if is_homogenous(current_state):
             break
+    #train model with history
+    solver.train_with_history()
     #save history
     solver.save_history()
         

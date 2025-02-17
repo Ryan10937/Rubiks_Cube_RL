@@ -11,13 +11,13 @@ import csv
 
 class RubiksCubeSolver:
     def __init__(self):
-        self.model = self._build_model()
         self.sphere = Sphere()
         self.epsilon = 0.2 # Exploration rate
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
         self.history_path = 'history'
         self.model_save_path = 'models/simple_dense_1.keras'
+        self.model = self._build_model()
         self.action_range = 12
         self.model_sequence_length = 3
         self.epochs = 100
@@ -31,7 +31,7 @@ class RubiksCubeSolver:
         }
 
     def save_history(self):
-        filepath = f'{self.history_path}/history_{len(os.listdir(self.history_path))}.npy'
+        filepath = f'{self.history_path}/history_{len(os.listdir(self.history_path))+1}.npy'
         with open(filepath, 'a', newline='') as csvfile:
             for hist,reward in self.history:
                 writer = csv.writer(csvfile)
@@ -50,14 +50,18 @@ class RubiksCubeSolver:
                     
         
     def _build_model(self):
-        model = models.Sequential()
-        model.add(layers.Input(shape=(6, 9)))#keep faces together
-        model.add(layers.Flatten())
-        model.add(layers.Dense(64, activation='relu'))
-        model.add(layers.Dense(64, activation='relu'))
-        model.add(layers.Dense(12))  # Output layer with 12 logits
-        model.compile(optimizer='adam', loss='mse')
-        return model
+        if os.path.exists(self.model_save_path):
+            model = models.load_model(self.model_save_path)
+            return model
+        else:    
+            model = models.Sequential()
+            model.add(layers.Input(shape=(6, 9)))#keep faces together
+            model.add(layers.Flatten())
+            model.add(layers.Dense(64, activation='relu'))
+            model.add(layers.Dense(64, activation='relu'))
+            model.add(layers.Dense(12))  # Output layer with 12 logits
+            model.compile(optimizer='adam', loss='mse')
+            return model
 
     def infer(self, state):
         state = self._reformat_state(state=state)
@@ -127,7 +131,6 @@ class RubiksCubeSolver:
 
     def _reformat_state(self,state):
         # return  np.array([[self.color_to_int[row] for row in s] for s in state])
-        print('state',state)
         if type(state[0][0]) == np.int64:
             return state
         return  np.array([[self.color_to_int[row] for row in s] for s in state])
