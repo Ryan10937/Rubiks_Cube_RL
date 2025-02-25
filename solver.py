@@ -20,10 +20,12 @@ class RubiksCubeSolver:
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
         self.history_path = 'history'
-        self.model_save_path = 'models/lstm_5_seq_masking.keras'
+        self.model_save_path = 'models/lstm_5_seq_masking_long.keras'
         self.action_range = 12
-        self.model_sequence_length = 5
+        self.model_sequence_length = 10 #prev, 5
         self.epochs = 100
+        self.batch_size = 2**10
+        self.training_chunks = 100_000
         self.model = self._build_model()
         self.color_to_int={
             'green':0,
@@ -118,7 +120,7 @@ class RubiksCubeSolver:
                        epochs=epochs,
                        validation_split=0.2,
                        callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5,restore_best_weights=True)],
-                       batch_size = 2**15,
+                       batch_size = self.batch_size,
                        )
         self.save_model(self.model_save_path)
     
@@ -136,7 +138,6 @@ class RubiksCubeSolver:
                 if len(hist_reward_pair[1])==0:
                     print('Empty reward')
 
-        self.training_chunks=1_000_000
         training_data = []
         for _ in range(self.training_chunks):
             hist = history[random.randint(0,len(history)-1)]#should pick one file

@@ -5,11 +5,14 @@ def is_homogenous(state):
             return False
     return True
 
-def train_until_solved(solver, max_timesteps,show_plot=True):
+def train_until_solved(solver, max_timesteps,show_plot=True,train=True):
     timestep_count=0
     solver.sphere.scramble(n=50)
     #train model with history
-    solver.train_with_history()
+    if train:
+        solver.train_with_history()
+    else:
+        solver.epsilon_decay = 1.0
     while True:
         if show_plot:
             #render rubiks cube
@@ -39,10 +42,10 @@ def train_until_solved(solver, max_timesteps,show_plot=True):
     solver.save_history()
         
     
-def run_episode(max_timesteps,num_episodes,show_plot=True,eps=0.1):
+def run_episode(max_timesteps,num_episodes,show_plot=True,eps=0.1,train=True):
     for episode in range(num_episodes):
         print('Episode: ',episode)
         cube = RubiksCubeSolver(show_plot=show_plot,eps=eps,episode=episode)
         if show_plot:
             cube.sphere.init_plot()
-        train_until_solved(cube,max_timesteps,show_plot=show_plot)
+        train_until_solved(cube,max_timesteps,show_plot=show_plot,train=train)
