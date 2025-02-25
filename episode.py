@@ -1,19 +1,20 @@
 from solver import RubiksCubeSolver
-from sphere import RubiksCube
 def is_homogenous(state):
     for row in state:
         if len(set(row)) != 1:
             return False
     return True
 
-def train_until_solved(solver, max_timesteps):
+def train_until_solved(solver, max_timesteps,show_plot=True):
     timestep_count=0
-    solver.sphere.scramble()
+    solver.sphere.scramble(n=50)
+    #train model with history
     solver.train_with_history()
     while True:
-        #render rubiks cube
-        solver.sphere.render()
-        timestep_count+=1
+        if show_plot:
+            #render rubiks cube
+            solver.sphere.render()
+        timestep_count += 1
 
 
         #get action from model
@@ -29,15 +30,19 @@ def train_until_solved(solver, max_timesteps):
         if timestep_count > max_timesteps:
             break
         if is_homogenous(current_state):
+            print('Solved')
             break
-    #train model with history
+    if show_plot:
+        solver.sphere.close_plot()
+    
     #save history
     solver.save_history()
         
     
-def run_episode(max_timesteps,num_episodes):
+def run_episode(max_timesteps,num_episodes,show_plot=True,eps=0.1):
     for episode in range(num_episodes):
         print('Episode: ',episode)
-        cube = RubiksCubeSolver()
-        cube.sphere.init_plot()
-        train_until_solved(cube,max_timesteps)
+        cube = RubiksCubeSolver(show_plot=show_plot,eps=eps,episode=episode)
+        if show_plot:
+            cube.sphere.init_plot()
+        train_until_solved(cube,max_timesteps,show_plot=show_plot)

@@ -7,13 +7,15 @@ matplotlib.use('TkAgg')
 from mpl_toolkits.mplot3d import Axes3D
 
 class RubiksCube:
-    def __init__(self, radius=1.0, center=(0, 0, 0)):
+    def __init__(self, radius=1.0, center=(0, 0, 0),show_plot=True):
         self.radius = radius
         self.center = np.array(center)
         self.points = []
         self.place_points_on_cube_faces(grid_range=0.3)
         self.round_points()
         self.color_list = self.create_color_list()
+        self.show_plot = show_plot
+        self.reward_history = []
 
     def init_plot(self):
         plt.ion()
@@ -26,6 +28,10 @@ class RubiksCube:
         self.ax.set_ylabel('Y')
         self.ax.set_zlabel('Z')
         
+    def close_plot(self):
+        plt.ioff()
+        plt.close(self.fig)
+
     def create_color_list(self):
         def color_conditions(coords):
             face_depth_dict = {
@@ -41,6 +47,7 @@ class RubiksCube:
             return str(face_depth_dict[str(plane_ind)+'_'+str(plane_depth)])
         
         return [color_conditions(coords) for coords in self.points]
+    
     def render(self):
         self.ax.cla()
         # Draw the sphere
@@ -158,6 +165,7 @@ class RubiksCube:
         plt.show()
         #all points are on either -0.25 or 0.25 and on either -1.0, 1.0\
         # there are also points on 0.0 and their respective face's radius length
+    
     def move_column(self,coord,plane,angle_degrees):
         planes_dict={'x':0,'y':1,'z':2}
         assert plane in planes_dict.keys()
@@ -184,7 +192,7 @@ class RubiksCube:
     def scramble(self,n=100):
 
         for i in range(n):
-            self.move(random.randint(0,11))
+            self.move(random.randint(0,11))#rand function is inclusive, Ive checked twice
     
     def group_points_by_face(self,points):
         self.face_colors = {
@@ -210,6 +218,7 @@ class RubiksCube:
             if 0.25 not in pt and -0.25 not in pt:
                 self.face_colors[face] = color
         return face_dict
+    
     def get_state(self):
         
         face_point_groups = self.group_points_by_face(self.points)
@@ -234,6 +243,7 @@ class RubiksCube:
         if faces_completed==6:
             reward += 1000
         return reward
+    
     def move(self,action):
         if action==0:
             self.move_column(coord=-0.25,plane='x',angle_degrees=90)
@@ -260,6 +270,7 @@ class RubiksCube:
         elif action==11:
             self.move_column(coord=0.25,plane='z',angle_degrees=270)
         self.round_points()
+    
     def step(self,action):
         self.move(action)
         state = self.get_state()
@@ -267,7 +278,9 @@ class RubiksCube:
         done = False
         if reward>1000:
             done = True
+        self.reward_history.append(reward)
         return state,reward,done
+   
     def get_next_state_rewards(self):
         rewards=[]
         for next_action in range(12):
@@ -276,3 +289,7 @@ class RubiksCube:
             sphere_copy.move(next_action)
             rewards.append(self.get_reward(sphere_copy.get_state()))
         return rewards
+    
+    def plot_reward_history(self):
+        plt.plot(self.reward_history)
+        plt.show()
