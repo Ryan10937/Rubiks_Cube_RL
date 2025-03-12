@@ -80,7 +80,10 @@ class RubiksCubeSolver:
             model.add(LSTM(64, return_sequences=True))  
             model.add(LSTM(64, return_sequences=False))  
             # Add a Dense layer to map to 12 outputs
-            model.add(Dense(12))
+            model.add(Dense(128,activation='relu'))
+            model.add(Dense(64, activation='relu'))
+            model.add(Dense(32, activation='relu'))
+            model.add(Dense(12, activation='linear'))
             # Compile the model
             model.compile(optimizer='adam', loss='mse')  # Adjust loss and optimizer as needed
             return model
