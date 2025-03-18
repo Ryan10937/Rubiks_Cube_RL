@@ -16,7 +16,7 @@ class RubiksCube:
         self.color_list = self.create_color_list()
         self.show_plot = show_plot
         self.reward_history = []
-
+        self.done = False
     def init_plot(self):
         plt.ion()
         self.fig = plt.figure(figsize=(8, 8))
@@ -227,21 +227,30 @@ class RubiksCube:
         return np.array(state)
     
     def get_reward(self,state):
+        # reward = 0
+        # faces_completed = 0
+        # for i,lst in enumerate(state):
+        #     face_reward=0
+        #     for pt in lst:
+        #         if pt==self.color_to_index[i]:
+        #             reward+=1
+        #             face_reward+=1
+        #     if face_reward==9:
+        #         reward+=10
+        #         faces_completed+=1
+        # if faces_completed==6:
+        #     reward = 1000
+        #     self.done = True
+        # return reward
         reward = 0
         faces_completed = 0
         for i,lst in enumerate(state):
-            face_reward=0
-            face_completed = False
-            for pt in lst:
-                if pt==self.color_to_index[i]:
-                    reward+=1
-                    face_reward+=1
-            if face_reward==9:
-                face_completed = True
-                reward+=10
+            if len(set(lst))==1:
+                reward+=1
                 faces_completed+=1
         if faces_completed==6:
-            reward += 1000
+            reward = 1000
+            self.done = True
         return reward
     
     def move(self,action):
@@ -275,11 +284,8 @@ class RubiksCube:
         self.move(action)
         state = self.get_state()
         reward = self.get_reward(state)
-        done = False
-        if reward>1000:
-            done = True
         self.reward_history.append(reward)
-        return state,reward,done
+        return state,reward,self.done
    
     def get_next_state_rewards(self):
         rewards=[]

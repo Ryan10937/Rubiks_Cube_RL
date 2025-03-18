@@ -13,14 +13,14 @@ import copy
 import csv
 
 class RubiksCubeSolver:
-    def __init__(self,show_plot=True,eps=0.1,episode=0):
+    def __init__(self,show_plot=True,eps=0.1,eps_decay=0.995,episode=0):
         self.sphere = RubiksCube(show_plot=show_plot)
-        self.epsilon_decay = 0.995 ** (episode+1)# Exploration rate decay
+        self.epsilon_decay = eps_decay ** (episode+1)# Exploration rate decay
         self.epsilon = eps * self.epsilon_decay# Exploration rate
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
         self.history_path = 'history'
-        self.model_save_path = 'models/lstm_5_seq_masking_long.keras'
+        self.model_save_path = 'models/lstm_5_seq_masking_long_non-linearity.keras'
         self.action_range = 12
         self.model_sequence_length = 10 #prev, 5
         self.epochs = 100
@@ -38,7 +38,11 @@ class RubiksCubeSolver:
         }
 
     def save_history(self):
-        filepath = f'{self.history_path}/history_{len(os.listdir(self.history_path))+1}.npy'
+        folder = 'general_history' if not self.sphere.done else 'solved_history'
+        save_folder = os.path.join(self.history_path,folder)
+        if not os.path.exists(save_folder):
+            os.makedirs(save_folder)
+        filepath = f'{save_folder}/history_{len(os.listdir(save_folder))+1}.npy'
         with open(filepath, 'a', newline='') as csvfile:
             for hist,reward in self.history:
                 writer = csv.writer(csvfile)
@@ -46,21 +50,23 @@ class RubiksCubeSolver:
     
     def load_history(self):
         history = []
-        for file in os.listdir(self.history_path):
-            run_history = []
-            with open(os.path.join(self.history_path, file), 'r') as csvfile:
-                reader = csv.reader(csvfile)
-                for row in reader:
-                    hist = np.array(eval(row[0]))
-                    reward = [float(r) for r in row[1].strip('[]').split(',')]
-                    if len(hist) == 0:
-                        print('Empty history')
-                        continue
-                    if len(reward) == 0:
-                        print('Empty history')
-                        continue
-                    run_history.append([hist, reward])
-                history.append(run_history)
+        for folder in os.listdir(self.history_path):
+            for file in os.listdir(os.path.join(self.history_path,folder)):
+                filepath = os.path.join(self.history_path,folder,file)
+                run_history = []
+                with open(filepath, 'r') as csvfile:
+                    reader = csv.reader(csvfile)
+                    for row in reader:
+                        hist = np.array(eval(row[0]))
+                        reward = [float(r) for r in row[1].strip('[]').split(',')]
+                        if len(hist) == 0:
+                            print('Empty history')
+                            continue
+                        if len(reward) == 0:
+                            print('Empty history')
+                            continue
+                        run_history.append([hist, reward])
+                    history.append(run_history)
         return history
         
     def _build_model(self):
@@ -170,7 +176,8 @@ class RubiksCubeSolver:
         self.train(states=states,rewards=rewards,epochs=self.epochs)
     
     def get_reward_from_state(self, state):
-        return self.sphere.get_reward(state)
+        self.current_state_reward = self.sphere.get_reward(state)
+        return self.current_state_reward
 
     def save_model(self, filepath):
         self.model.save(filepath)

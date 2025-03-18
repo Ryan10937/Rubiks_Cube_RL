@@ -12,3 +12,8 @@ next is to verify training works as expected
 then change model to RNN
 
 make wins folder to record wins during long runs
+
+
+
+WILO 3/17/2025
+created wins folder, a number of runs will determine if it works
