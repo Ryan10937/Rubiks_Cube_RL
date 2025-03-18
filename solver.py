@@ -186,7 +186,6 @@ class RubiksCubeSolver:
         self.model = models.load_model(filepath)
 
     def _reformat_state(self,states):
-        # if type(states[0][0][0]) == np.int64:
         if type(states[0][0][0]) == np.int64:
             return states
         return  np.array([[[self.color_to_int[row] for row in s] for s in state] for state in states])

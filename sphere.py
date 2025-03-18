@@ -194,7 +194,8 @@ class RubiksCube:
         for i in range(n):
             self.move(random.randint(0,11))#rand function is inclusive, Ive checked twice
     
-    def group_points_by_face(self,points):
+    def group_points_by_face(self):
+        points=self.points
         self.face_colors = {
             '0_-1':'none',
             '0_1':'none',
@@ -214,14 +215,19 @@ class RubiksCube:
 
         for pt,color in zip(points,self.color_list):
             face = str(np.argmax([abs(p) for p in pt]))+'_'+str(1 if pt[np.argmax([abs(p) for p in pt])]>0 else -1)
-            face_dict[face].append(color)
+            face_dict[face].append((color,pt))
             if 0.25 not in pt and -0.25 not in pt:
+                if 0 not in pt:
+                    print(pt)
                 self.face_colors[face] = color
-        return face_dict
+
+        #sort the points by x,y,z 
+        for face in face_dict.keys():
+            face_dict[face].sort(key=lambda x :(x[1][0], x[1][0], x[1][2]))
+        return {k:[x[0] for x in v] for k,v in face_dict.items()}#return only the colors
     
     def get_state(self):
-        
-        face_point_groups = self.group_points_by_face(self.points)
+        face_point_groups = self.group_points_by_face()
         state = [lst for key,lst in face_point_groups.items()]
         self.color_to_index = [self.face_colors[key] for key,lst in face_point_groups.items()]
         return np.array(state)
