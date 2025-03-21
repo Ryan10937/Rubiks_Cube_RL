@@ -28,6 +28,8 @@ class RubiksCube:
         self.ax.set_ylabel('Y')
         self.ax.set_zlabel('Z')
         
+        self.reward_history = []
+
     def close_plot(self):
         plt.ioff()
         plt.close(self.fig)
@@ -303,5 +305,10 @@ class RubiksCube:
         return rewards
     
     def plot_reward_history(self):
+        # Plot the reward history
+            #overwrites the most recent run
         plt.plot(self.reward_history)
+        plt.xlabel('Timestep')
+        plt.ylabel('Reward')
         plt.show()
+        plt.savefig('reward_history.png')
