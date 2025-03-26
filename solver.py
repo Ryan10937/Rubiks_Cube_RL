@@ -17,6 +17,7 @@ class RubiksCubeSolver:
         self.sphere = RubiksCube(show_plot=show_plot)
         self.epsilon_decay = eps_decay ** (episode+1)# Exploration rate decay
         self.epsilon = eps * self.epsilon_decay# Exploration rate
+        self.discount = 0.95 # Discount rate
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
         self.history_path = 'history'
@@ -94,11 +95,28 @@ class RubiksCubeSolver:
             model.compile(optimizer='adam', loss='mse')  # Adjust loss and optimizer as needed
             return model
 
+    def get_bellman_rewards(self, state_with_memory):
+        #needs to return the bellman rewards for each action, an array of num_actions size (12)
+        print('len(self.memory_queue):',len(self.memory_queue))
+        rewards = self.model.predict(state_with_memory,verbose=0)
+        future_rewards = []
+        for action in range(self.action_range):
+            sphere_copy = copy.deepcopy(self.sphere)
+            new_state = sphere_copy.move(action)
+            action_state = self._reformat_state(states=[new_state])
+            action_state = np.array(action_state).reshape((1, 6, 9))
 
+            memory_states = np.array([x[0] for x in self.memory_queue[1:]])
+            new_state_with_memory = np.concatenate((memory_states, action_state), axis=0)
+            future_rewards.append(self.model.predict(new_state_with_memory,verbose=0))
+            rewards[action] = rewards[action] + self.discount*np.max(future_rewards[action])
+        return rewards
     def infer(self, state):
+        #reformat state to fit model
         state = self._reformat_state(states=[state])
         state = np.array(state).reshape((1, 6, 9))
 
+        #epsilon greedy
         if random.random() < self.epsilon:
             action = random.randint(0, self.action_range)
         else:
@@ -107,11 +125,13 @@ class RubiksCubeSolver:
             else:
                 memory_states = np.array([x[0] for x in self.memory_queue])
                 state_with_memory = np.concatenate((memory_states, state), axis=0)
-                action = np.argmax(self.model.predict(np.array([state_with_memory]),verbose=0))
+                # action = np.argmax(self.model.predict(np.array([state_with_memory]),verbose=0))
+                action = np.argmax(self.get_bellman_rewards(state_with_memory))
         #add to memory queue
         while len(self.memory_queue) > self.model_sequence_length:
             self.memory_queue.pop(0)
-        rewards = self.sphere.get_next_state_rewards()
+        rewards = self.sphere.get_next_state_rewards() #this function should actually be named "get THIS state rewards" as it returns the rewards for the current state
+                                                        #this state's rewards just so happen to be the rewards for the next state 
         self.memory_queue.append([state[0],rewards])
         self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
         return action

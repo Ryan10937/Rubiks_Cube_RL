@@ -26,15 +26,9 @@ def train_until_solved(solver, max_timesteps,show_plot=True,train=True,num_shuff
         #perform that action on the env
         solver.sphere.move(action)
 
-        #get state
-        current_state = solver.sphere.get_state()
-
         #break if solved or too many timesteps
         if timestep_count > max_timesteps:
             break
-        # if is_homogenous(current_state):
-        #     print('Solved')
-        #     break
         if solver.sphere.done==True:
             print('Solved')
             break

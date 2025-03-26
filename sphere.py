@@ -59,6 +59,7 @@ class RubiksCube:
         y = self.radius * np.outer(np.sin(u), np.sin(v)) + self.center[1]
         z = self.radius * np.outer(np.ones(np.size(u)), np.cos(v)) + self.center[2]
         self.ax.plot_surface(x, y, z, color='b', alpha=0.1)
+        
         # Draw the points
         if self.points:
             points_array = np.array(self.points)

@@ -17,3 +17,10 @@ make wins folder to record wins during long runs
 
 WILO 3/17/2025
 created wins folder, a number of runs will determine if it works
+
+WILO 3/25/2025
+make sure bellman eq is implemented properly
+  bellman was not implemented at all
+  started working on it, got a shape error that indicates the state memory isnt being popped properly
+  it runs for the first 12 timesteps because it breaks with a condition
+  i could "trim" it every time but that feels wrong 
