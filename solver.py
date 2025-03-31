@@ -21,7 +21,7 @@ class RubiksCubeSolver:
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
         self.history_path = 'history'
-        self.model_save_path = 'models/lstm_5_seq_masking_long_non-linearity.keras'
+        self.model_save_path = 'models/lstm_5_03312025.keras'
         self.action_range = 12
         self.model_sequence_length = 10 #prev, 5
         self.epochs = 100
@@ -96,19 +96,21 @@ class RubiksCubeSolver:
             return model
 
     def get_bellman_rewards(self, state_with_memory):
-        #needs to return the bellman rewards for each action, an array of num_actions size (12)
-        print('len(self.memory_queue):',len(self.memory_queue))
-        rewards = self.model.predict(state_with_memory,verbose=0)
+        #returns the bellman rewards for each action, an array of num_actions size (12)
+        rewards = self.model.predict(np.array([state_with_memory[self.model_sequence_length*-1:]]),verbose=0)[0]
         future_rewards = []
         for action in range(self.action_range):
-            sphere_copy = copy.deepcopy(self.sphere)
-            new_state = sphere_copy.move(action)
+
+            sphere_copy = RubiksCube(show_plot=False)
+            sphere_copy.points = copy.deepcopy(self.sphere.points)
+            sphere_copy.move(action)
+            new_state = sphere_copy.get_state()
             action_state = self._reformat_state(states=[new_state])
             action_state = np.array(action_state).reshape((1, 6, 9))
 
-            memory_states = np.array([x[0] for x in self.memory_queue[1:]])
+            memory_states = np.array([x[0] for x in self.memory_queue[self.model_sequence_length*-1 + 1:]])
             new_state_with_memory = np.concatenate((memory_states, action_state), axis=0)
-            future_rewards.append(self.model.predict(new_state_with_memory,verbose=0))
+            future_rewards.append(self.model.predict(np.array([new_state_with_memory]),verbose=0))
             rewards[action] = rewards[action] + self.discount*np.max(future_rewards[action])
         return rewards
     def infer(self, state):
