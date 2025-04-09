@@ -100,7 +100,6 @@ class RubiksCubeSolver:
         rewards = self.model.predict(np.array([state_with_memory[self.model_sequence_length*-1:]]),verbose=0)[0]
         future_rewards = []
         for action in range(self.action_range):
-
             sphere_copy = RubiksCube(show_plot=False)
             sphere_copy.points = copy.deepcopy(self.sphere.points)
             sphere_copy.move(action)
@@ -117,6 +116,7 @@ class RubiksCubeSolver:
         #reformat state to fit model
         state = self._reformat_state(states=[state])
         state = np.array(state).reshape((1, 6, 9))
+
 
         #epsilon greedy
         if random.random() < self.epsilon:
