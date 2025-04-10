@@ -236,21 +236,6 @@ class RubiksCube:
         return np.array(state)
     
     def get_reward(self,state):
-        # reward = 0
-        # faces_completed = 0
-        # for i,lst in enumerate(state):
-        #     face_reward=0
-        #     for pt in lst:
-        #         if pt==self.color_to_index[i]:
-        #             reward+=1
-        #             face_reward+=1
-        #     if face_reward==9:
-        #         reward+=10
-        #         faces_completed+=1
-        # if faces_completed==6:
-        #     reward = 1000
-        #     self.done = True
-        # return reward
         reward = 0
         faces_completed = 0
         for i,lst in enumerate(state):

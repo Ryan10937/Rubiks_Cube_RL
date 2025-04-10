@@ -11,7 +11,17 @@ import os
 from sphere import RubiksCube
 import copy
 import csv
+from anytree import NodeMixin
+from collections import deque
 
+# from anytree import Node, RenderTree
+import random
+class Node(NodeMixin):
+    def __init__(self, name, value=None, metadata=None, parent=None):
+        self.name = name
+        self.value = value
+        self.metadata = metadata or {'depth':-1,'action':-1,'state':[],'reward':0}
+        self.parent = parent
 class RubiksCubeSolver:
     def __init__(self,show_plot=True,eps=0.1,eps_decay=0.995,episode=0):
         self.sphere = RubiksCube(show_plot=show_plot)
@@ -116,8 +126,6 @@ class RubiksCubeSolver:
         #reformat state to fit model
         state = self._reformat_state(states=[state])
         state = np.array(state).reshape((1, 6, 9))
-
-
         #epsilon greedy
         if random.random() < self.epsilon:
             action = random.randint(0, self.action_range)
@@ -127,13 +135,14 @@ class RubiksCubeSolver:
             else:
                 memory_states = np.array([x[0] for x in self.memory_queue])
                 state_with_memory = np.concatenate((memory_states, state), axis=0)
-                # action = np.argmax(self.model.predict(np.array([state_with_memory]),verbose=0))
                 action = np.argmax(self.get_bellman_rewards(state_with_memory))
         #add to memory queue
         while len(self.memory_queue) > self.model_sequence_length:
             self.memory_queue.pop(0)
-        rewards = self.sphere.get_next_state_rewards() #this function should actually be named "get THIS state rewards" as it returns the rewards for the current state
-                                                        #this state's rewards just so happen to be the rewards for the next state 
+        # rewards = self.sphere.get_next_state_rewards() #this function should actually be named "get THIS state rewards" as it returns the rewards for the current state
+        #                                                 #this state's rewards just so happen to be the rewards for the next state 
+        rewards = self.get_tree_rewards()
+        
         self.memory_queue.append([state[0],rewards])
         self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
         return action
@@ -212,5 +221,32 @@ class RubiksCubeSolver:
             return states
         return  np.array([[[self.color_to_int[row] for row in s] for s in state] for state in states])
 
+    def get_tree_rewards(self,depth=2):
+
+        def build_large_tree(root_value, branching_factor, depth):
+            def get_state(parent_state, action,depth):
+                # Perform the action on the parent state to get the new state
+                #returns a n_actions size array of rewards
+                sphere_copy = RubiksCube(show_plot=False)
+                sphere_copy.points = copy.deepcopy(parent_state)
+                sphere_copy.move(action)
+                state = sphere_copy.get_state()
+                return sphere_copy.points,sphere_copy.get_reward(state)*(self.discount**depth)
+            
+            root = Node(root_value,metadata={'depth':-1,'action':-1,'state':self.sphere.points,'reward':0})
+            queue = deque([(root, 0)])
+            counter = 1
+
+            while queue:
+                node, level = queue.popleft()
+                if level < depth:
+                    for a in range(branching_factor):
+                        child = Node(f"Node {counter}", parent=node,metadata={'depth':level,'action':a})
+                        child.metadata['state'],child.metadata['reward'] = get_state(child.parent.metadata['state'],child.metadata['action'],child.metadata['depth'])
+                        counter += 1
+                        queue.append((child, level + 1))
+            return root
+        tree=build_large_tree(self.sphere.get_state(),self.action_range,depth)
+        return [sum([desc.metadata['reward'] for desc in child.descendants]) for child in tree.children]
 
 

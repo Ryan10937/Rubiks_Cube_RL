@@ -24,3 +24,11 @@ make sure bellman eq is implemented properly
   started working on it, got a shape error that indicates the state memory isnt being popped properly
   it runs for the first 12 timesteps because it breaks with a condition
   i could "trim" it every time but that feels wrong 
+
+
+4/9 notes
+Ive just created a way to get the reward of a current state based on distant future states.
+If this information is captured in the reward, can i get away with only using a dense network?
+  This might actually be more work than using an LSTM because i would need to edit the history
+  What if i did nothing but added this to my reward?
+  Is this an environment item? Or more of a model solving item
