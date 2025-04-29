@@ -31,7 +31,7 @@ class RubiksCubeSolver:
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
         self.history_path = 'history'
-        self.model_save_path = 'models/lstm_5_03312025.keras'
+        self.model_save_path = 'models/lstm_5_04-13-2025.keras'
         self.action_range = 12
         self.model_sequence_length = 10 #prev, 5
         self.epochs = 100
@@ -49,6 +49,7 @@ class RubiksCubeSolver:
         }
 
     def save_history(self):
+        # folder = 'general_history' if not self.sphere.done else 'solved_history'
         folder = 'general_history' if not self.sphere.done else 'solved_history'
         save_folder = os.path.join(self.history_path,folder)
         if not os.path.exists(save_folder):
@@ -105,24 +106,7 @@ class RubiksCubeSolver:
             model.compile(optimizer='adam', loss='mse')  # Adjust loss and optimizer as needed
             return model
 
-    def get_bellman_rewards(self, state_with_memory):
-        #returns the bellman rewards for each action, an array of num_actions size (12)
-        rewards = self.model.predict(np.array([state_with_memory[self.model_sequence_length*-1:]]),verbose=0)[0]
-        future_rewards = []
-        for action in range(self.action_range):
-            sphere_copy = RubiksCube(show_plot=False)
-            sphere_copy.points = copy.deepcopy(self.sphere.points)
-            sphere_copy.move(action)
-            new_state = sphere_copy.get_state()
-            action_state = self._reformat_state(states=[new_state])
-            action_state = np.array(action_state).reshape((1, 6, 9))
-
-            memory_states = np.array([x[0] for x in self.memory_queue[self.model_sequence_length*-1 + 1:]])
-            new_state_with_memory = np.concatenate((memory_states, action_state), axis=0)
-            future_rewards.append(self.model.predict(np.array([new_state_with_memory]),verbose=0))
-            rewards[action] = rewards[action] + self.discount*np.max(future_rewards[action])
-        return rewards
-    def infer(self, state):
+    def infer(self, state,save_history=True):
         #reformat state to fit model
         state = self._reformat_state(states=[state])
         state = np.array(state).reshape((1, 6, 9))
@@ -131,20 +115,23 @@ class RubiksCubeSolver:
             action = random.randint(0, self.action_range)
         else:
             if len(self.memory_queue) <= self.model_sequence_length:
+                rewards = self.get_tree_rewards()
                 action = random.randint(0, self.action_range)
             else:
                 memory_states = np.array([x[0] for x in self.memory_queue])
                 state_with_memory = np.concatenate((memory_states, state), axis=0)
-                action = np.argmax(self.get_bellman_rewards(state_with_memory))
+                rewards = self.model.predict(np.array([state_with_memory]),verbose=0)
+                action = np.argmax(rewards)
+                
         #add to memory queue
         while len(self.memory_queue) > self.model_sequence_length:
             self.memory_queue.pop(0)
         # rewards = self.sphere.get_next_state_rewards() #this function should actually be named "get THIS state rewards" as it returns the rewards for the current state
         #                                                 #this state's rewards just so happen to be the rewards for the next state 
-        rewards = self.get_tree_rewards()
-        
+        if save_history == True:
+            self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
         self.memory_queue.append([state[0],rewards])
-        self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
+
         return action
     
     def train(self, states, rewards, epochs=10):
