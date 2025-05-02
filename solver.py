@@ -31,7 +31,8 @@ class RubiksCubeSolver:
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
         self.history_path = 'history'
-        self.model_save_path = 'models/lstm_5_04-13-2025.keras'
+        # self.model_save_path = 'models/lstm_5_04-13-2025.keras'
+        self.model_save_path = 'models/lstm_5_05-02-2025.keras'
         self.action_range = 12
         self.model_sequence_length = 10 #prev, 5
         self.epochs = 100
@@ -47,6 +48,12 @@ class RubiksCubeSolver:
             'orange':5,
             'null':-1,
         }
+
+        #fill memory queue with filler
+        fill_char = -1
+        for _ in range(self.model_sequence_length-len(self.memory_queue)-1):
+            self.memory_queue.append([np.array([[fill_char for _ in range(9)] for x in range(6)]),
+                                        [-1 for x in range(12)]])
 
     def save_history(self):
         # folder = 'general_history' if not self.sphere.done else 'solved_history'
@@ -107,33 +114,36 @@ class RubiksCubeSolver:
             return model
 
     def infer(self, state,save_history=True):
+
         #reformat state to fit model
         state = self._reformat_state(states=[state])
-        state = np.array(state).reshape((1, 6, 9))
+        state = np.array(state).reshape((1, 6, 9))  
+
+        memory_states = np.array([x[0] for x in self.memory_queue])
+        state_with_memory = np.concatenate((state,memory_states), axis=0)
+        rewards = self.model.predict(np.array([state_with_memory]),verbose=0)
         #epsilon greedy
         if random.random() < self.epsilon:
             action = random.randint(0, self.action_range)
         else:
-            if len(self.memory_queue) <= self.model_sequence_length:
-                rewards = self.get_tree_rewards()
-                action = random.randint(0, self.action_range)
-            else:
-                memory_states = np.array([x[0] for x in self.memory_queue])
-                state_with_memory = np.concatenate((memory_states, state), axis=0)
-                rewards = self.model.predict(np.array([state_with_memory]),verbose=0)
-                action = np.argmax(rewards)
+            action = np.argmax(rewards)
                 
         #add to memory queue
         while len(self.memory_queue) > self.model_sequence_length:
-            self.memory_queue.pop(0)
-        # rewards = self.sphere.get_next_state_rewards() #this function should actually be named "get THIS state rewards" as it returns the rewards for the current state
-        #                                                 #this state's rewards just so happen to be the rewards for the next state 
+            self.memory_queue.pop(-1)
         if save_history == True:
             self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
-        self.memory_queue.append([state[0],rewards])
+        self.memory_queue = [[state[0],rewards[0]]]+self.memory_queue
 
         return action
     
+    def generate_history(self,state):
+        state = self._reformat_state(states=[state])
+        state = np.array(state).reshape((1, 6, 9))
+        rewards = self.get_tree_rewards()
+        self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
+        return np.argmax(rewards)
+
     def train(self, states, rewards, epochs=10):
         print('Training model')
         #this function expects a list of states in color format
