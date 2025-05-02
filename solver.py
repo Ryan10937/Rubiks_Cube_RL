@@ -11,7 +11,17 @@ import os
 from sphere import RubiksCube
 import copy
 import csv
+from anytree import NodeMixin
+from collections import deque
 
+# from anytree import Node, RenderTree
+import random
+class Node(NodeMixin):
+    def __init__(self, name, value=None, metadata=None, parent=None):
+        self.name = name
+        self.value = value
+        self.metadata = metadata or {'depth':-1,'action':-1,'state':[],'reward':0}
+        self.parent = parent
 class RubiksCubeSolver:
     def __init__(self,show_plot=True,eps=0.1,eps_decay=0.995,episode=0):
         self.sphere = RubiksCube(show_plot=show_plot)
@@ -21,7 +31,8 @@ class RubiksCubeSolver:
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
         self.history_path = 'history'
-        self.model_save_path = 'models/lstm_5_03312025.keras'
+        # self.model_save_path = 'models/lstm_5_04-13-2025.keras'
+        self.model_save_path = 'models/lstm_5_05-02-2025.keras'
         self.action_range = 12
         self.model_sequence_length = 10 #prev, 5
         self.epochs = 100
@@ -38,7 +49,14 @@ class RubiksCubeSolver:
             'null':-1,
         }
 
+        #fill memory queue with filler
+        fill_char = -1
+        for _ in range(self.model_sequence_length-len(self.memory_queue)-1):
+            self.memory_queue.append([np.array([[fill_char for _ in range(9)] for x in range(6)]),
+                                        [-1 for x in range(12)]])
+
     def save_history(self):
+        # folder = 'general_history' if not self.sphere.done else 'solved_history'
         folder = 'general_history' if not self.sphere.done else 'solved_history'
         save_folder = os.path.join(self.history_path,folder)
         if not os.path.exists(save_folder):
@@ -95,49 +113,37 @@ class RubiksCubeSolver:
             model.compile(optimizer='adam', loss='mse')  # Adjust loss and optimizer as needed
             return model
 
-    def get_bellman_rewards(self, state_with_memory):
-        #returns the bellman rewards for each action, an array of num_actions size (12)
-        rewards = self.model.predict(np.array([state_with_memory[self.model_sequence_length*-1:]]),verbose=0)[0]
-        future_rewards = []
-        for action in range(self.action_range):
-            sphere_copy = RubiksCube(show_plot=False)
-            sphere_copy.points = copy.deepcopy(self.sphere.points)
-            sphere_copy.move(action)
-            new_state = sphere_copy.get_state()
-            action_state = self._reformat_state(states=[new_state])
-            action_state = np.array(action_state).reshape((1, 6, 9))
+    def infer(self, state,save_history=True):
 
-            memory_states = np.array([x[0] for x in self.memory_queue[self.model_sequence_length*-1 + 1:]])
-            new_state_with_memory = np.concatenate((memory_states, action_state), axis=0)
-            future_rewards.append(self.model.predict(np.array([new_state_with_memory]),verbose=0))
-            rewards[action] = rewards[action] + self.discount*np.max(future_rewards[action])
-        return rewards
-    def infer(self, state):
         #reformat state to fit model
         state = self._reformat_state(states=[state])
-        state = np.array(state).reshape((1, 6, 9))
+        state = np.array(state).reshape((1, 6, 9))  
 
-
+        memory_states = np.array([x[0] for x in self.memory_queue])
+        state_with_memory = np.concatenate((state,memory_states), axis=0)
+        rewards = self.model.predict(np.array([state_with_memory]),verbose=0)
         #epsilon greedy
         if random.random() < self.epsilon:
             action = random.randint(0, self.action_range)
         else:
-            if len(self.memory_queue) <= self.model_sequence_length:
-                action = random.randint(0, self.action_range)
-            else:
-                memory_states = np.array([x[0] for x in self.memory_queue])
-                state_with_memory = np.concatenate((memory_states, state), axis=0)
-                # action = np.argmax(self.model.predict(np.array([state_with_memory]),verbose=0))
-                action = np.argmax(self.get_bellman_rewards(state_with_memory))
+            action = np.argmax(rewards)
+                
         #add to memory queue
         while len(self.memory_queue) > self.model_sequence_length:
-            self.memory_queue.pop(0)
-        rewards = self.sphere.get_next_state_rewards() #this function should actually be named "get THIS state rewards" as it returns the rewards for the current state
-                                                        #this state's rewards just so happen to be the rewards for the next state 
-        self.memory_queue.append([state[0],rewards])
-        self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
+            self.memory_queue.pop(-1)
+        if save_history == True:
+            self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
+        self.memory_queue = [[state[0],rewards[0]]]+self.memory_queue
+
         return action
     
+    def generate_history(self,state):
+        state = self._reformat_state(states=[state])
+        state = np.array(state).reshape((1, 6, 9))
+        rewards = self.get_tree_rewards()
+        self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
+        return np.argmax(rewards)
+
     def train(self, states, rewards, epochs=10):
         print('Training model')
         #this function expects a list of states in color format
@@ -212,5 +218,32 @@ class RubiksCubeSolver:
             return states
         return  np.array([[[self.color_to_int[row] for row in s] for s in state] for state in states])
 
+    def get_tree_rewards(self,depth=2):
+
+        def build_large_tree(root_value, branching_factor, depth):
+            def get_state(parent_state, action,depth):
+                # Perform the action on the parent state to get the new state
+                #returns a n_actions size array of rewards
+                sphere_copy = RubiksCube(show_plot=False)
+                sphere_copy.points = copy.deepcopy(parent_state)
+                sphere_copy.move(action)
+                state = sphere_copy.get_state()
+                return sphere_copy.points,sphere_copy.get_reward(state)*(self.discount**depth)
+            
+            root = Node(root_value,metadata={'depth':-1,'action':-1,'state':self.sphere.points,'reward':0})
+            queue = deque([(root, 0)])
+            counter = 1
+
+            while queue:
+                node, level = queue.popleft()
+                if level < depth:
+                    for a in range(branching_factor):
+                        child = Node(f"Node {counter}", parent=node,metadata={'depth':level,'action':a})
+                        child.metadata['state'],child.metadata['reward'] = get_state(child.parent.metadata['state'],child.metadata['action'],child.metadata['depth'])
+                        counter += 1
+                        queue.append((child, level + 1))
+            return root
+        tree=build_large_tree(self.sphere.get_state(),self.action_range,depth)
+        return [sum([desc.metadata['reward'] for desc in child.descendants]) for child in tree.children]
 
 
