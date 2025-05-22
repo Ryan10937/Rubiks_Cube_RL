@@ -13,6 +13,7 @@ import copy
 import csv
 from anytree import NodeMixin
 from collections import deque
+import requests
 
 # from anytree import Node, RenderTree
 import random
@@ -56,7 +57,7 @@ class RubiksCubeSolver:
                                         [-1 for x in range(12)]])
 
     def save_history(self):
-        # folder = 'general_history' if not self.sphere.done else 'solved_history'
+
         folder = 'general_history' if not self.sphere.done else 'solved_history'
         save_folder = os.path.join(self.history_path,folder)
         if not os.path.exists(save_folder):
@@ -239,4 +240,13 @@ class RubiksCubeSolver:
         tree=build_large_tree(self.sphere.get_state(),self.action_range,depth)
         return [sum([desc.metadata['reward'] for desc in child.descendants]) for child in tree.children]
 
-
+    def upload_history(self):
+        # Upload the history to a server
+        
+        url = 'http://localhost:6740/upload'
+        files = [
+            ('files', open('file1.txt', 'rb')),
+            ('files', open('file2.txt', 'rb'))
+        ]
+        response = requests.post(url, files=files)
+        print(response.json())
