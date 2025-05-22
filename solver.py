@@ -180,13 +180,6 @@ class RubiksCubeSolver:
             hist = history[random.randint(0,len(history)-1)]#should pick one file
             if len(hist)<self.model_sequence_length:
                 continue
-                fill_char = -1
-                hist_to_append = []
-                for _ in range(self.model_sequence_length-len(hist)):
-                    hist_to_append.append([np.array([[fill_char for _ in range(9)] for x in range(6)]),
-                                           [0 for x in range(12)]])
-                for h in hist:
-                    hist_to_append.append(h)
             else:
                 random_idx = random.randint(self.model_sequence_length,len(hist))
                 hist_to_append = hist[(random_idx-self.model_sequence_length):random_idx]

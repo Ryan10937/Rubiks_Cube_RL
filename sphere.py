@@ -28,7 +28,7 @@ class RubiksCube:
         self.ax.set_ylabel('Y')
         self.ax.set_zlabel('Z')
         
-        self.reward_history = []
+        # self.reward_history = []
 
     def close_plot(self):
         plt.ioff()
@@ -277,7 +277,9 @@ class RubiksCube:
     def step(self,action):
         self.move(action)
         state = self.get_state()
+        print('state',state)
         reward = self.get_reward(state)
+        print('reward',reward)
         self.reward_history.append(reward)
         return state,reward,self.done
    
