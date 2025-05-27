@@ -68,3 +68,8 @@ if __name__ == '__main__':
   # response = requests.get(url)
   # with open('file1.txt', 'wb') as f:
   #     f.write(response.content)
+
+
+  # Example curl request for the /test endpoint:
+  #
+  # curl -X POST -F "key1=value1" -F "key2=value2" http://localhost:6740/test

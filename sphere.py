@@ -277,9 +277,7 @@ class RubiksCube:
     def step(self,action):
         self.move(action)
         state = self.get_state()
-        print('state',state)
         reward = self.get_reward(state)
-        print('reward',reward)
         self.reward_history.append(reward)
         return state,reward,self.done
    

@@ -90,6 +90,7 @@ def create_training_data(max_timesteps=30, num_episodes=100, num_shuffle=100):
                 break
         
         cube.save_history()
+        cube.upload_history('192.168.1.213')
 
 def train_using_history(num_episodes):
     for epoch in range(num_episodes):

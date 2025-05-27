@@ -240,13 +240,26 @@ class RubiksCubeSolver:
         tree=build_large_tree(self.sphere.get_state(),self.action_range,depth)
         return [sum([desc.metadata['reward'] for desc in child.descendants]) for child in tree.children]
 
-    def upload_history(self):
+    def upload_history(self,ip):
         # Upload the history to a server
         
-        url = 'http://localhost:6740/upload'
-        files = [
-            ('files', open('file1.txt', 'rb')),
-            ('files', open('file2.txt', 'rb'))
-        ]
-        response = requests.post(url, files=files)
-        print(response.json())
+        url = f'http://{ip}:8080/upload'
+        # files = [
+        #     ('files', open('file1.txt', 'rb')),
+        #     ('files', open('file2.txt', 'rb'))
+        # ]
+        for folder in os.listdir(self.history_path):
+            if folder not in ['general_history','solved_history']:
+                continue
+            print(f'Uploading files from {folder} to {url}')
+            files = [('files', open(os.path.join(self.history_path,folder,file), 'rb')) for file in os.listdir(os.path.join(self.history_path,folder))]
+            if len(files) == 0:
+                print('No files to upload')
+                return
+            print(f'Uploading {len(files)} files to {url}')
+            response = requests.post(url, files=files)
+            print(response.json())
+
+            #remove history files after upload
+            # for file in os.listdir(os.path.join(self.history_path,folder)):
+            #     os.remove(os.path.join(self.history_path,folder,file))
