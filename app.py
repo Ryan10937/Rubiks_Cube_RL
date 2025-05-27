@@ -1,16 +1,18 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory,Response
 import os
 from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = 'history/uploaded_history'
+#UPLOAD_FOLDER = 'history/upload_history'
+UPLOAD_FOLDER = '//wsl.localhost/Ubuntu/root/projects/Rubiks_Cube_RL/history/uploaded_history'
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.route('/test', methods=['POST'])
+@app.route('/test', methods=['POST','GET'])
 def test():
-  print(request.form)
+    return Response("boom, we built something\n", status=200, mimetype='text/plain')
 @app.route('/upload', methods=['POST'])
 def upload_files():
   if 'files' not in request.files:
@@ -21,7 +23,8 @@ def upload_files():
     if file.filename == '':
       continue
     filename = secure_filename(file.filename)
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    #file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    file.save(app.config['UPLOAD_FOLDER']+'/'+ filename)
     saved_files.append(filename)
   return jsonify({'saved_files': saved_files}), 200
 
@@ -68,8 +71,3 @@ if __name__ == '__main__':
   # response = requests.get(url)
   # with open('file1.txt', 'wb') as f:
   #     f.write(response.content)
-
-
-  # Example curl request for the /test endpoint:
-  #
-  # curl -X POST -F "key1=value1" -F "key2=value2" http://localhost:6740/test
