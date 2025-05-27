@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 import os
 from werkzeug.utils import secure_filename
 
-UPLOAD_FOLDER = 'history/general_history'
+UPLOAD_FOLDER = 'history/uploaded_history'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
@@ -40,7 +40,7 @@ def download_file(filename):
   return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 if __name__ == '__main__':
-  app.run(debug=True,port=6740)
+  app.run(debug=True,port=80,host='0.0.0.0')
 
 
   # Example Python request for uploading files (using requests library):
