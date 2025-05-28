@@ -225,7 +225,6 @@ class RubiksCube:
                 self.face_colors[face] = color
 
         #sort the points by x,y,z 
-        print(face_dict)
         for face in face_dict.keys():
             face_dict[face].sort(key=lambda x :(x[1][0], x[1][1], x[1][2]))#wilo, changed middle index from x[1][0] to x[1][1]
         return {k:[x[0] for x in v] for k,v in face_dict.items()}#return only the colors
