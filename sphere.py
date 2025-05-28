@@ -50,7 +50,7 @@ class RubiksCube:
         
         return [color_conditions(coords) for coords in self.points]
     
-    def render(self):
+    def render(self,pause_timer=0.1):
         self.ax.cla()
         # Draw the sphere
         u = np.linspace(0, 2 * np.pi, 100)
@@ -71,7 +71,7 @@ class RubiksCube:
                 s=20
             )
         plt.show(block=False)
-        plt.pause(0.1)
+        plt.pause(pause_timer)
 
     def place_points_on_cube_faces(self, grid_range=0.5):
         """Place 9 points on each of the 6 cube-like faces of the sphere.
@@ -225,8 +225,9 @@ class RubiksCube:
                 self.face_colors[face] = color
 
         #sort the points by x,y,z 
+        print(face_dict)
         for face in face_dict.keys():
-            face_dict[face].sort(key=lambda x :(x[1][0], x[1][0], x[1][2]))
+            face_dict[face].sort(key=lambda x :(x[1][0], x[1][1], x[1][2]))#wilo, changed middle index from x[1][0] to x[1][1]
         return {k:[x[0] for x in v] for k,v in face_dict.items()}#return only the colors
     
     def get_state(self):

@@ -62,7 +62,7 @@ class RubiksCubeSolver:
         save_folder = os.path.join(self.history_path,folder)
         if not os.path.exists(save_folder):
             os.makedirs(save_folder)
-        filepath = f'{save_folder}/history_{len(os.listdir(save_folder))+1}.npy'
+        filepath = f'{save_folder}/history_{len(os.listdir(save_folder))+1}_{str(random.randint(1,1_000_000_000))}.npy'
         with open(filepath, 'a', newline='') as csvfile:
             for hist,reward in self.history:
                 writer = csv.writer(csvfile)
@@ -243,7 +243,7 @@ class RubiksCubeSolver:
     def upload_history(self,ip):
         # Upload the history to a server
         
-        url = f'http://{ip}:8080/upload'
+        url = f'http://{ip}:80/upload'
         # files = [
         #     ('files', open('file1.txt', 'rb')),
         #     ('files', open('file2.txt', 'rb'))
