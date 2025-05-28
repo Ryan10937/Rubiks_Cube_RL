@@ -1,5 +1,5 @@
 from pdb import run
-from solver import RubiksCubeSolver
+from rubiks_utils.solver import RubiksCubeSolver
 import copy
 def is_homogenous(state):
     for row in state:
@@ -67,7 +67,7 @@ def evaluate(max_timesteps,num_episodes,show_plot=True,eps=0.1,eps_decay=0.995,t
         print('Random total Reward',sum(random_reward_history))
 
 
-def create_training_data(max_timesteps=30, num_episodes=100, num_shuffle=100):
+def create_training_data(max_timesteps=30, num_episodes=100, num_shuffle=100,upload_ip=''):
     for episode in range(num_episodes):
         print('Episode: ', episode)
         cube = RubiksCubeSolver(episode=episode)
@@ -90,7 +90,8 @@ def create_training_data(max_timesteps=30, num_episodes=100, num_shuffle=100):
                 break
         
         cube.save_history()
-        cube.upload_history('192.168.1.213')
+    assert upload_ip != '', 'Upload IP must be provided to upload history'
+    cube.upload_history(upload_ip)
 
 def train_using_history(num_episodes):
     for epoch in range(num_episodes):

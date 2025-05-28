@@ -8,3 +8,4 @@ test/
 history/
 models/
 WILO.txt
+*.egg*

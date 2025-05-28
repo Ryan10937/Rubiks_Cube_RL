@@ -1,0 +1,14 @@
+[project]
+name = "rubiks-utils"
+version = "0.1.0"
+description = "Utilities for Rubik's cube-related operations"
+authors = [{ name = "Ryan Sterzenbach", email = "ryan@sterzenbach.com" }]
+readme = "README.md"
+requires-python = ">=3.12.3"
+
+[tool.setuptools]
+packages = ["rubiks_utils"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -8,7 +8,7 @@ from tensorflow.keras.layers import LSTM, Dense, Reshape, TimeDistributed, Maski
 import numpy as np
 import random
 import os
-from sphere import RubiksCube
+from rubiks_utils.sphere import RubiksCube
 import copy
 import csv
 from anytree import NodeMixin
@@ -31,7 +31,7 @@ class RubiksCubeSolver:
         self.discount = 0.95 # Discount rate
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
-        self.history_path = 'history'
+        self.history_path = '../history'
         # self.model_save_path = 'models/lstm_5_04-13-2025.keras'
         self.model_save_path = 'models/lstm_5_05-02-2025.keras'
         self.action_range = 12
@@ -242,12 +242,7 @@ class RubiksCubeSolver:
 
     def upload_history(self,ip):
         # Upload the history to a server
-        
         url = f'http://{ip}:80/upload'
-        # files = [
-        #     ('files', open('file1.txt', 'rb')),
-        #     ('files', open('file2.txt', 'rb'))
-        # ]
         for folder in os.listdir(self.history_path):
             if folder not in ['general_history','solved_history']:
                 continue
@@ -261,5 +256,5 @@ class RubiksCubeSolver:
             print(response.json())
 
             #remove history files after upload
-            # for file in os.listdir(os.path.join(self.history_path,folder)):
-            #     os.remove(os.path.join(self.history_path,folder,file))
+            for file in os.listdir(os.path.join(self.history_path,folder)):
+                os.remove(os.path.join(self.history_path,folder,file))

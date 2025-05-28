@@ -4,14 +4,15 @@
 from ast import arg
 from pdb import run
 
-from episode import run_episode, create_training_data,train_using_history,evaluate
+from rubiks_utils.episode import create_training_data,train_using_history,evaluate
 import time
 import argparse
 
 if __name__ == '__main__':
-
+# 192.168.1.213
     parser = argparse.ArgumentParser(description='Rubik\'s Cube Solver')
     parser.add_argument('--generate_data', action='store_true', help='generate training data',required=False,)
+    parser.add_argument('--upload_ip',type=str, help='ip for uploading generated data',required=False,)
     parser.add_argument('--train', action='store_true', help='train the model',required=False)
     parser.add_argument('--evaluate', action='store_true', help='evaluate the model against an e-greedy policy',required=False)
     # parser.add_argument('--infer', type=int, default=1000, help='infer on specified state',required=False)
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.generate_data:
         print('Generating training data')
-        create_training_data(max_timesteps=args.num_timesteps, num_episodes=args.num_episodes, num_shuffle=args.num_shuffle)
+        create_training_data(max_timesteps=args.num_timesteps, num_episodes=args.num_episodes, num_shuffle=args.num_shuffle,upload_ip=args.upload_ip)
     if args.train:
         print('Training the model')
         train_using_history(num_episodes=args.num_episodes)
