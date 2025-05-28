@@ -255,7 +255,7 @@ class RubiksCubeSolver:
             files = [('files', open(os.path.join(self.history_path,folder,file), 'rb')) for file in os.listdir(os.path.join(self.history_path,folder))]
             if len(files) == 0:
                 print('No files to upload')
-                return
+                continue
             print(f'Uploading {len(files)} files to {url}')
             response = requests.post(url, files=files)
             print(response.json())
