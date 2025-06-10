@@ -9,7 +9,7 @@ import time
 import argparse
 
 if __name__ == '__main__':
-# 192.168.1.213
+
     parser = argparse.ArgumentParser(description='Rubik\'s Cube Solver')
     parser.add_argument('--generate_data', action='store_true', help='generate training data',required=False,)
     parser.add_argument('--upload_ip',type=str, help='ip for uploading generated data',required=False,)

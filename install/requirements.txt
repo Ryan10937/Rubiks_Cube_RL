@@ -1,8 +1,9 @@
-gym==0.26.2
+gym
 keras==3.6.0
-matplotlib==3.9.2
-numpy==1.26.4
-pillow==11.0.0
+matplotlib
+numpy
+pillow
 tensorflow==2.17.0
-colorama
 flask
+colorama
+anytree
