@@ -27,4 +27,6 @@ ENV UPLOAD_IP=$UPLOAD_IP
 ENV NUM_EPISODES=$NUM_EPISODES
 ENV NUM_TIMESTEPS=$NUM_TIMESTEPS
 # Set default command to run the script
-CMD ["python", "scripts/main.py", "--generate_data", "--num_episodes", NUM_EPISODES, "--num_timesteps", NUM_TIMESTEPS,"--upload_ip",UPLOAD_IP]
+# CMD ["sh","-c","python3", "scripts/main.py --generate_data --num_episodes $NUM_EPISODES --num_timesteps $NUM_TIMESTEPS --upload_ip $UPLOAD_IP"]
+
+ENTRYPOINT ["echo Hello from Docker!"]
