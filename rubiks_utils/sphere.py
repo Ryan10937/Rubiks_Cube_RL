@@ -236,15 +236,25 @@ class RubiksCube:
         return np.array(state)
     
     def get_reward(self,state):
+        #center color is at index 4 of each face (center of array)
         reward = 0
-        faces_completed = 0
-        for i,lst in enumerate(state):
-            if len(set(lst))==1:
-                reward+=1
-                faces_completed+=1
-        if faces_completed==6:
+        # faces_completed = 0
+        # for i,lst in enumerate(state):
+        #     if len(set(lst))==1:
+        #         reward+=1
+        #         faces_completed+=1
+        # if faces_completed==6:
+        #     reward = 1000
+        #     self.done = True
+        for i, lst in enumerate(state):
+            center_color = lst[4]
+            reward += sum(1 for color in lst if color == center_color)
+        # if all colors are the same, then reward is 1000
+        if all(len(set(lst)) == 1 for lst in state):
             reward = 1000
             self.done = True
+        else:
+            self.done = False
         return reward
     
     def move(self,action):
