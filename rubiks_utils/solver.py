@@ -4,7 +4,7 @@ from colorama import init
 from matplotlib.pylab import rand
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from tensorflow.keras.layers import LSTM, Dense, Reshape, TimeDistributed, Masking
+from tensorflow.keras.layers import Dense, Flatten, Input
 import numpy as np
 import random
 import os
@@ -31,9 +31,9 @@ class RubiksCubeSolver:
         self.discount = 0.95 # Discount rate
         self.memory_queue = [] # Queue of states
         self.history = [] #array of states and rewards
-        self.history_path = '../history'
+        self.history_path = 'history'
         # self.model_save_path = 'models/lstm_5_04-13-2025.keras'
-        self.model_save_path = 'models/lstm_5_05-02-2025.keras'
+        self.model_save_path = 'models/DNN_6_21_2025.keras'
         self.action_range = 12
         self.model_sequence_length = 10 #prev, 5
         self.epochs = 100
@@ -96,17 +96,8 @@ class RubiksCubeSolver:
         else:    
             # Define the model
             model = models.Sequential()
-            # Reshape input to (n, s, 54)
-            model.add(TimeDistributed(Reshape((54,)), input_shape=(self.model_sequence_length, 6, 9)))
-            # Add Masking layer
-            # model.add(Masking(mask_value=-1, input_shape=(self.model_sequence_length, 6, 9)))
-            model.add(Masking(mask_value=-1))
-            # Add LSTM layer(s)
-            model.add(LSTM(64, return_sequences=True))  
-            model.add(LSTM(64, return_sequences=True))  
-            model.add(LSTM(64, return_sequences=False))  
-            # Add a Dense layer to map to 12 outputs
-            model.add(Dense(128,activation='relu'))
+            layers.Input(shape=(6,9)),            # shape: (M, N, P)
+            layers.Flatten(), 
             model.add(Dense(64, activation='relu'))
             model.add(Dense(32, activation='relu'))
             model.add(Dense(12, activation='linear'))
@@ -115,23 +106,17 @@ class RubiksCubeSolver:
             return model
 
     def infer(self, state,save_history=True):
-
         #reformat state to fit model
         state = self._reformat_state(states=[state])
         state = np.array(state).reshape((1, 6, 9))  
 
-        memory_states = np.array([x[0] for x in self.memory_queue])
-        state_with_memory = np.concatenate((state,memory_states), axis=0)
-        rewards = self.model.predict(np.array([state_with_memory]),verbose=0)
+        rewards = self.model.predict(state,verbose=0)
         #epsilon greedy
         if random.random() < self.epsilon:
             action = random.randint(0, self.action_range)
         else:
             action = np.argmax(rewards)
                 
-        #add to memory queue
-        while len(self.memory_queue) > self.model_sequence_length:
-            self.memory_queue.pop(-1)
         if save_history == True:
             self.history.append([state[0],rewards])#rewards should be a list of rewards for each action
         self.memory_queue = [[state[0],rewards[0]]]+self.memory_queue
@@ -151,8 +136,8 @@ class RubiksCubeSolver:
             #eg [['green','green','green',...],['purple','purple','purple',...],...]
             #and they must be instances of 6 by 9
         states = [self._reformat_state(states=state) for state in states]
-        states = np.array(states).reshape((-1,self.model_sequence_length,6, 9))
-        rewards = np.array([r[-1] for r in rewards])
+        states = np.array(states).reshape((-1,6,9))
+        rewards = np.array(rewards)
         self.model.fit(states, 
                        rewards, 
                        epochs=epochs,
@@ -177,16 +162,17 @@ class RubiksCubeSolver:
                     print('Empty reward')
 
         training_data = []
+        #pick random history files and append to training data self.training_chunks times
+        if len(history) == 0:
+            print('No history to train on')
+            return
         for _ in range(self.training_chunks):
             hist = history[random.randint(0,len(history)-1)]#should pick one file
-            if len(hist)<self.model_sequence_length:
+            random_idx = random.randint(0,len(hist)-1)
+            hist_to_append = hist[random_idx]
+            if len(hist_to_append) == 0:
+                print('Empty history in train')
                 continue
-            else:
-                random_idx = random.randint(self.model_sequence_length,len(hist))
-                hist_to_append = hist[(random_idx-self.model_sequence_length):random_idx]
-                if len(hist_to_append) == 0:
-                    print('Empty history in train')
-                    continue
             training_data.append(hist_to_append)
 
         #training data is n sets of self.model_sequence length state,reward pairs

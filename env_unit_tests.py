@@ -1,7 +1,8 @@
 
 from click import pause
-from sphere import RubiksCube
-
+from rubiks_utils.sphere import RubiksCube
+import matplotlib
+matplotlib.use('TkAgg')
 if __name__ == "__main__":
 
     # make sure indecies on cube are consistent with colors in state
@@ -9,12 +10,13 @@ if __name__ == "__main__":
     cube = RubiksCube()
 
     # center color should be center of each face state
-    # cube.scramble(100)
-    # print(cube.points[0])
-    # print(cube.get_state())
-    # print(cube.color_list)
+    cube.scramble(100)
+    print(cube.points[0])
+    for face in cube.get_state(): 
+      print(face)
+    print(cube.color_list)
     cube.init_plot()
-    # cube.render(pause_timer=5000)
+    cube.render(pause_timer=5000)
     # regardless of the face they are on.
 
     # make sure actions act like they should
