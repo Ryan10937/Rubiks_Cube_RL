@@ -74,6 +74,7 @@ def create_training_data(max_timesteps=30, num_episodes=100, num_shuffle=100,upl
         timestep_count = 0
         cube.sphere.scramble(n=num_shuffle)   
         while True:
+            print('Timestep: ', timestep_count)
             timestep_count += 1
 
             #get action from model
@@ -90,8 +91,9 @@ def create_training_data(max_timesteps=30, num_episodes=100, num_shuffle=100,upl
                 break
         
         cube.save_history()
-        cube.upload_history(upload_ip)
-        assert upload_ip != '', 'Upload IP must be provided to upload history'
+        if upload_ip != '':
+            cube.upload_history(upload_ip)
+        # assert upload_ip != '', 'Upload IP must be provided to upload history'
 
 def train_using_history(num_episodes):
     for epoch in range(num_episodes):
