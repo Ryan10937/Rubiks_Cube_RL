@@ -38,7 +38,8 @@ class RubiksCubeSolver:
         self.model_sequence_length = 10 #prev, 5
         self.epochs = 100
         self.batch_size = 2**10
-        self.training_chunks = 100_000
+        # self.training_chunks = 100_000
+        self.training_chunks = 10
         self.model = self._build_model()
         self.color_to_int={
             'green':0,
@@ -85,8 +86,12 @@ class RubiksCubeSolver:
                         if len(reward) == 0:
                             print('Empty history')
                             continue
-                        run_history.append([hist, reward])
-                    history.append(run_history)
+                        if len(hist) != 6 or len(hist[0]) != 9 or len(reward) != 12:
+                            print('Invalid history shape')
+                            print('hist',len(hist),len(hist[0]),'reward',len(reward))
+                            continue
+                        # run_history.append([hist, reward])
+                        history.append([hist, reward])
         return history
         
     def _build_model(self):
@@ -96,8 +101,8 @@ class RubiksCubeSolver:
         else:    
             # Define the model
             model = models.Sequential()
-            layers.Input(shape=(6,9)),            # shape: (M, N, P)
-            layers.Flatten(), 
+            model.add(Input(shape=(6,9),batch_size=self.batch_size))
+            model.add(Flatten())
             model.add(Dense(64, activation='relu'))
             model.add(Dense(32, activation='relu'))
             model.add(Dense(12, activation='linear'))
@@ -151,33 +156,30 @@ class RubiksCubeSolver:
         if len(os.listdir(self.history_path))<1:
             return
         history = self.load_history()
-        for hist in history:
-            if len(hist)==0:
-                print('Empty entry')
-                continue
-            for hist_reward_pair in hist:
-                if len(hist_reward_pair[0])==0:
-                    print('Empty history')
-                if len(hist_reward_pair[1])==0:
-                    print('Empty reward')
+        print('Loaded history from',self.history_path)
 
         training_data = []
         #pick random history files and append to training data self.training_chunks times
         if len(history) == 0:
-            print('No history to train on')
+            print('No history for training')
             return
         for _ in range(self.training_chunks):
-            hist = history[random.randint(0,len(history)-1)]#should pick one file
-            random_idx = random.randint(0,len(hist)-1)
-            hist_to_append = hist[random_idx]
+            hist_to_append = history[random.randint(0,len(history)-1)]#picks one row
             if len(hist_to_append) == 0:
                 print('Empty history in train')
+                continue
+            if len(hist_to_append[0]) != 6 or len(hist_to_append[0][0]) != 9 or len(hist_to_append[1]) != 12:
+                print('Invalid history shape in train')
+                print('hist_to_append',len(hist_to_append[0]),len(hist_to_append[0][0]),len(hist_to_append[1]))
+                print(hist_to_append)
                 continue
             training_data.append(hist_to_append)
 
         #training data is n sets of self.model_sequence length state,reward pairs
-        states = [[y[0] for y in x] for x in training_data]
-        rewards = [[y[1] for y in x] for x in training_data]
+        states = np.array([state_reward_pair[0] for state_reward_pair in training_data])
+        rewards = np.array([state_reward_pair[1] for state_reward_pair in training_data])
+        assert states.shape == (self.training_chunks, 6, 9)
+        assert rewards.shape == (self.training_chunks, 12)
         if len(training_data) == 0:
             print('No training data')
             return
@@ -194,9 +196,10 @@ class RubiksCubeSolver:
         self.model = models.load_model(filepath)
 
     def _reformat_state(self,states):
-        if type(states[0][0][0]) == np.int64:
+        if type(states[0][0]) == np.int64:
             return states
-        return  np.array([[[self.color_to_int[row] for row in s] for s in state] for state in states])
+        reformatted_states = np.array([[[self.color_to_int[row] for row in s] for s in state] for state in states])
+        return reformatted_states  
 
     def get_tree_rewards(self,depth=2):
 
