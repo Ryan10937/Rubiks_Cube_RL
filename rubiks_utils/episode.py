@@ -91,7 +91,7 @@ def create_training_data(max_timesteps=30, num_episodes=100, num_shuffle=100,upl
                 break
         
         cube.save_history()
-        if upload_ip != '':
+        if upload_ip != '' or upload_ip != None:
             cube.upload_history(upload_ip)
         # assert upload_ip != '', 'Upload IP must be provided to upload history'
 
